@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cutter</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font: 14px/1.4 system-ui, sans-serif; background: #111; color: #eee; margin: 0; padding: 20px; max-width: 1000px; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  h2 { font-size: 14px; margin: 18px 0 6px; color: #bbb; text-transform: uppercase; letter-spacing: .04em; }
+  textarea { width: 100%; height: 130px; background: #1b1b1b; color: #eee; border: 1px solid #333; border-radius: 6px; padding: 8px; box-sizing: border-box; font: 12px monospace; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0; align-items: end; }
+  label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: #aaa; }
+  label.inline { flex-direction: row; align-items: center; gap: 6px; color: #ddd; }
+  input[type=text], input[type=number], input[type=password], select { background: #1b1b1b; color: #eee; border: 1px solid #333; border-radius: 4px; padding: 5px 7px; }
+  input[type=number] { width: 70px; }
+  button { background: #2f6fed; color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; font-size: 14px; cursor: pointer; }
+  button.alt { background: #333; }
+  button.small { padding: 5px 10px; font-size: 12px; }
+  button:disabled { opacity: .45; cursor: default; }
+  .rule { background: #1b1b1b; border: 1px solid #2a2a2a; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+  .rule .tag { font-weight: 600; font-size: 12px; color: #7ab0ff; margin-right: 8px; }
+  .rule .row { margin: 6px 0 0; }
+  #log { background: #0b0b0b; border: 1px solid #222; border-radius: 6px; padding: 8px; height: 170px; overflow: auto; font: 12px monospace; white-space: pre-wrap; margin-top: 10px; }
+  #clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 14px; }
+  .clip { background: #1b1b1b; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px; font-size: 12px; }
+  .clip video { width: 100%; border-radius: 4px; background: #000; }
+  .clip a, #out a { color: #7ab0ff; }
+  #out video { width: 100%; max-width: 720px; margin-top: 10px; background: #000; }
+  .hint { color: #888; font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>Cutter</h1>
+
+<h2>Videos</h2>
+<textarea id="urls" placeholder="Paste YouTube video URLs, or channel / playlist pages (one per line)"></textarea>
+<div class="row">
+  <label>Or upload a .txt/.csv list <input type="file" id="file" accept=".txt,.csv,text/plain"></label>
+  <label>Max videos per page URL <input type="number" id="maxPage" value="12" min="1"></label>
+</div>
+
+<h2>What to cut</h2>
+<div id="rules"></div>
+<div class="row">
+  <button class="alt small" id="addPhrase">+ Phrase / sentence (exact or near match)</button>
+  <button class="alt small" id="addDescribe">+ Describe a moment (uses Claude)</button>
+</div>
+
+<h2>Options</h2>
+<div class="row">
+  <label>Lead-in (s) <input type="number" id="lead" value="1.0" step="0.1" min="0"></label>
+  <label>Tail (s) <input type="number" id="tail" value="0.4" step="0.1" min="0"></label>
+  <label class="inline"><input type="checkbox" id="fallbackOn" checked> If nothing matches, grab the last <input type="number" id="fallbackSec" value="12" min="3"> s</label>
+  <label class="inline"><input type="checkbox" id="autoBuild" checked> Auto-build montage when done</label>
+</div>
+<div class="row">
+  <label>Anthropic API key (only for "describe" rules) <input type="password" id="apiKey" size="34" placeholder="sk-ant-..."></label>
+  <label>Model <input type="text" id="model" value="claude-sonnet-5-5" size="20"></label>
+</div>
+
+<div class="row">
+  <button id="run">Find &amp; record clips</button>
+  <button id="stop" class="alt" disabled>Stop</button>
+  <button id="build" class="alt" disabled>Build montage from checked clips</button>
+</div>
+<div class="hint">Recording plays each video in real time, with sound, in a tab that comes to the front. Leave it uncovered. Keep this tab in front while the montage builds. For channel pages use the /videos URL. "Describe" rules send that video's transcript to the Anthropic API with your key; nothing else leaves your browser.</div>
+<div id="log"></div>
+<div id="clips"></div>
+<div id="out"></div>
+<script src="lib.js"></script>
+<script src="inject.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
