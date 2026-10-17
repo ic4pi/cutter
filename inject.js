@@ -169,7 +169,8 @@ async function ytRecord(start, end) {
   const blob = new Blob(chunks, { type: rec.mimeType || mime || 'video/webm' });
   const b64 = await new Promise(res => {
     const fr = new FileReader();
-    fr.onload = () => res(String(fr.result).split(',')[1]);
+    // data URL mime can itself contain a comma (codecs=avc1...,mp4a...), so cut at "base64,"
+    fr.onload = () => { const s = String(fr.result); res(s.slice(s.indexOf('base64,') + 7)); };
     fr.readAsDataURL(blob);
   });
   return { ok: true, b64, mime: blob.type, w: v.videoWidth, h: v.videoHeight, hasAudio, from, reached };

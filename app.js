@@ -14,11 +14,11 @@ let abort = false;
 function save() {
   const o = { rules };
   FIELDS.forEach(f => { const el = $(f); o[f] = el.type === 'checkbox' ? el.checked : el.value; });
-  try { localStorage.setItem('cutter', JSON.stringify(o)); } catch (e) {}
+  try { localStorage.setItem('cutter2', JSON.stringify(o)); } catch (e) {}
 }
 function restore() {
   try {
-    const o = JSON.parse(localStorage.getItem('cutter') || '{}');
+    const o = JSON.parse(localStorage.getItem('cutter2') || '{}');
     FIELDS.forEach(f => {
       if (!(f in o)) return;
       const el = $(f);
@@ -73,7 +73,8 @@ function renderRules() {
     d.className = 'rule';
     const head = document.createElement('div');
     head.innerHTML = '<span class="tag"></span>';
-    head.querySelector('.tag').textContent = r.type === 'phrase' ? 'PHRASE / SENTENCE' : 'DESCRIBED MOMENT';
+    head.querySelector('.tag').textContent =
+      r.type === 'phrase' ? 'PHRASE / SENTENCE' : r.type === 'keywords' ? 'KEYWORDS (NO API KEY)' : 'DESCRIBED MOMENT (CLAUDE)';
     const rm = document.createElement('button');
     rm.className = 'alt small';
     rm.textContent = 'Remove';
@@ -90,6 +91,14 @@ function renderRules() {
         field(r, 'which', 'Which hits', 'select', [['last', 'Last in video'], ['first', 'First in video'], ['all', 'Every hit']]),
         field(r, 'after', 'No end phrase: secs after', 'number', { min: 0 })
       );
+    } else if (r.type === 'keywords') {
+      row.append(
+        field(r, 'words', 'Any of these (comma separated)', 'text', { size: 44, placeholder: 'e.g. fallen angel, fallen angels, nephilim' }),
+        field(r, 'strict', 'Match', 'select', [['exact', 'Exact'], ['near', 'Near (typos, split words)'], ['loose', 'Loose']]),
+        field(r, 'before', 'Secs before', 'number', { min: 0 }),
+        field(r, 'after', 'Secs after', 'number', { min: 0 }),
+        field(r, 'max', 'Max clips per video', 'number', { min: 1 })
+      );
     } else {
       row.append(
         field(r, 'desc', 'Describe the moment', 'text', { size: 60, placeholder: 'e.g. the host making a claim about fallen angels' }),
@@ -101,6 +110,7 @@ function renderRules() {
   });
 }
 $('addPhrase').onclick = () => { rules.push({ type: 'phrase', start: '', end: '', strict: 'near', which: 'all', after: 5 }); save(); renderRules(); };
+$('addKeywords').onclick = () => { rules.push({ type: 'keywords', words: '', strict: 'near', before: 5, after: 10, max: 5 }); save(); renderRules(); };
 $('addDescribe').onclick = () => { rules.push({ type: 'describe', desc: '', max: 3 }); save(); renderRules(); };
 
 // ---------- tab helpers ----------
@@ -158,6 +168,11 @@ async function planClips(words, s, duration, tag) {
       const name = `"${(r.start || r.end).trim()}" (${r.strict})`;
       cs.forEach(c => found.push({ ...c, how: `${name}: ${c.how}` }));
       if (!cs.length) log(`${tag} no hit for ${name}`);
+    } else if (r.type === 'keywords') {
+      if (!String(r.words || '').trim()) continue;
+      const cs = L.findKeywordClips(words, r, { lead: s.lead, tail: s.tail });
+      cs.forEach(c => found.push(c));
+      log(`${tag} keywords "${String(r.words).trim().slice(0, 40)}": ${cs.length} clip(s)`);
     } else if (r.type === 'describe') {
       const desc = String(r.desc || '').trim();
       if (!desc) continue;

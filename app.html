@@ -44,14 +44,15 @@
 <div id="rules"></div>
 <div class="row">
   <button class="alt small" id="addPhrase">+ Phrase / sentence (exact or near match)</button>
-  <button class="alt small" id="addDescribe">+ Describe a moment (uses Claude)</button>
+  <button class="alt small" id="addKeywords">+ Keywords (no API key)</button>
+  <button class="alt small" id="addDescribe">+ Describe a moment (uses Claude, needs API key)</button>
 </div>
 
 <h2>Options</h2>
 <div class="row">
   <label>Lead-in (s) <input type="number" id="lead" value="1.0" step="0.1" min="0"></label>
   <label>Tail (s) <input type="number" id="tail" value="0.4" step="0.1" min="0"></label>
-  <label class="inline"><input type="checkbox" id="fallbackOn" checked> If nothing matches, grab the last <input type="number" id="fallbackSec" value="12" min="3"> s</label>
+  <label class="inline"><input type="checkbox" id="fallbackOn"> If nothing matches, grab the last <input type="number" id="fallbackSec" value="12" min="3"> s</label>
   <label class="inline"><input type="checkbox" id="autoBuild" checked> Auto-build montage when done</label>
 </div>
 <div class="row">

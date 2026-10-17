@@ -69,4 +69,25 @@ assert.strictEqual(parsed[1].end, 145, 'clamped to 45s');
 assert.deepStrictEqual(L.parseClips('no json here', 100, 3), []);
 assert.deepStrictEqual(L.parseClips('[not json]', 100, 3), []);
 
+// ---- keyword rule
+const kw = L.wordsFromJson3({ events: [
+  mk(100, 'so the fallen angels are here'.split(' ')),
+  mk(108, 'yes fallen angel after fallen angel'.split(' ')),
+  mk(500, 'one more fallen angles mention'.split(' ')),
+  mk(900, 'nothing relevant here at all'.split(' ')),
+] });
+let kc = L.findKeywordClips(kw, { words: 'fallen angel, fallen angels', strict: 'near', before: 5, after: 10, max: 5 });
+assert.strictEqual(kc.length, 2, 'nearby hits grouped, far hit separate');
+assert(kc[0].start < 100 && kc[0].end > 108);
+assert(kc[0].score >= 3);
+kc = L.findKeywordClips(kw, { words: 'fallen angel, fallen angels', strict: 'near', max: 1 });
+assert.strictEqual(kc.length, 1);
+assert(kc[0].start < 105, 'densest group kept');
+assert.deepStrictEqual(L.findKeywordClips(kw, { words: 'banana', strict: 'exact' }), []);
+
+// ---- recorder data-URL parsing (mime contains a comma)
+const du = 'data:video/mp4;codecs=avc1.640028,mp4a.40.2;base64,QUJDRA==';
+assert.strictEqual(du.slice(du.indexOf('base64,') + 7), 'QUJDRA==');
+assert.strictEqual(Buffer.from(du.slice(du.indexOf('base64,') + 7), 'base64').toString(), 'ABCD');
+
 console.log('all tests pass');

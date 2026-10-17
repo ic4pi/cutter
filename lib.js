@@ -175,6 +175,46 @@
     return out;
   }
 
+  // Keyword rule (no API needed): every spot where any listed term is said.
+  // rule: {words:'fallen angel, fallen angels', strict, before, after, max}
+  // Nearby hits are grouped into one clip; if more than `max` groups, keep the densest.
+  function findKeywordClips(words, rule, o) {
+    o = o || {};
+    const lead = o.lead != null ? o.lead : 0;
+    const tail = o.tail != null ? o.tail : 0.4;
+    const num = (v, d) => (v === '' || v == null || !Number.isFinite(Number(v)) ? d : Number(v));
+    const before = num(rule.before, 5);
+    const after = num(rule.after, 10);
+    const max = Math.max(1, Math.floor(num(rule.max, 5)));
+    const gap = 15;      // hits closer than this share a clip
+    const maxSpan = 40;  // never let one clip chain on longer than this
+    const thr = STRICT[rule.strict] != null ? STRICT[rule.strict] : STRICT.near;
+    const terms = String(rule.words || '').split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+    let hits = [];
+    for (const term of terms) {
+      for (const h of findHits(words, term, thr)) hits.push({ t: words[h.i].t, e: words[h.j].e, term });
+    }
+    hits.sort((a, b) => a.t - b.t);
+    const groups = [];
+    for (const h of hits) {
+      const g = groups[groups.length - 1];
+      if (g && h.t - g.last <= gap && h.e - g.first <= maxSpan) {
+        g.last = h.t; g.end = Math.max(g.end, h.e); g.n++;
+        if (!g.terms.includes(h.term)) g.terms.push(h.term);
+      } else {
+        groups.push({ first: h.t, last: h.t, end: h.e, n: 1, terms: [h.term] });
+      }
+    }
+    const kept = groups.map((g, i) => ({ g, i })).sort((a, b) => b.g.n - a.g.n || a.i - b.i).slice(0, max)
+      .sort((a, b) => a.i - b.i).map(x => x.g);
+    return kept.map(g => ({
+      start: Math.max(0, g.first - before - lead),
+      end: g.end + after + tail,
+      how: 'keyword "' + g.terms.join('", "') + '" x' + g.n,
+      score: g.n,
+    }));
+  }
+
   // Merge overlapping/adjacent ranges, joining their labels.
   function mergeRanges(clips, gap) {
     gap = gap == null ? 0.3 : gap;
@@ -246,7 +286,7 @@
 
   const api = {
     norm, extractUrls, classify, wordsFromJson3, wordsFromLines,
-    STRICT, lev, sim, findSeq, findHits, findClips, mergeRanges,
+    STRICT, lev, sim, findSeq, findHits, findClips, findKeywordClips, mergeRanges,
     transcriptText, buildPrompt, parseClips,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

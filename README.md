@@ -11,9 +11,10 @@ Chrome extension. Paste YouTube URLs, say what to cut, and Cutter records just t
 ## Rules (what to cut)
 
 - **Phrase / sentence.** Exact, near (tolerates mis-heard or split words), or loose match. Optional "until" phrase sets the clip end. Take the last, first, or every hit in each video.
+- **Keywords (no API key).** Comma-separated terms, e.g. `fallen angel, fallen angels`. Exact or near match. Every spot where one is said becomes a clip (seconds before/after adjustable); nearby hits are grouped, and if there are more than the max, the densest groups win.
 - **Described moment.** Plain-language description, e.g. `the host making a claim about fallen angels`. Cutter sends that video's transcript to the Anthropic API and records the timestamps Claude returns. Needs your own Anthropic API key (entered in the page, kept in this browser's localStorage). Captions have no speaker labels, so "host" or "narrator" is inferred from what is said.
 
-Overlapping hits from different rules are merged into one clip. If nothing matches and the fallback option is on, Cutter grabs the last N seconds.
+Overlapping hits from different rules are merged into one clip. The "last N seconds" fallback is off by default; turn it on only for videos that end with the line you want.
 
 ## How it works
 
